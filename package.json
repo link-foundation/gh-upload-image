@@ -1,6 +1,6 @@
 {
   "name": "gh-upload-image",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Upload images to GitHub using the undocumented /upload/policies/assets endpoint. Works with both public and private repositories.",
   "type": "module",
   "main": "src/index.js",
