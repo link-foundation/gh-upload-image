@@ -1,10 +1,13 @@
 {
-  "name": "my-package",
-  "version": "0.2.2",
-  "description": "A JavaScript/TypeScript package template for AI-driven development",
+  "name": "gh-upload-image",
+  "version": "0.1.0",
+  "description": "Upload images to GitHub using the undocumented /upload/policies/assets endpoint. Works with both public and private repositories.",
   "type": "module",
   "main": "src/index.js",
   "types": "src/index.d.ts",
+  "bin": {
+    "gh-upload-image": "./src/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./src/index.d.ts",
@@ -26,16 +29,22 @@
     "changeset:status": "changeset status --since=origin/main"
   },
   "keywords": [
-    "template",
-    "javascript",
-    "typescript",
-    "ai-driven"
+    "github",
+    "image",
+    "upload",
+    "cdn",
+    "markdown",
+    "issues",
+    "pull-requests",
+    "comments",
+    "attachments",
+    "cli"
   ],
   "author": "",
   "license": "Unlicense",
   "repository": {
     "type": "git",
-    "url": "https://github.com/link-foundation/js-ai-driven-development-pipeline-template"
+    "url": "https://github.com/link-foundation/gh-upload-image"
   },
   "engines": {
     "node": ">=20.0.0"

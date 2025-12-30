@@ -1,187 +1,201 @@
-# js-ai-driven-development-pipeline-template
+# gh-upload-image
 
-A comprehensive template for AI-driven JavaScript/TypeScript development with full CI/CD pipeline support.
+Upload images to GitHub using the undocumented `/upload/policies/assets` endpoint. Works with both public and private repositories.
 
 ## Features
 
-- **Multi-runtime support**: Works with Bun, Node.js, and Deno
-- **Universal testing**: Uses [test-anywhere](https://github.com/link-foundation/test-anywhere) for cross-runtime tests
-- **Automated releases**: Changesets-based versioning with GitHub Actions
-- **Code quality**: ESLint + Prettier with pre-commit hooks via Husky
-- **Package manager agnostic**: Works with bun, npm, yarn, pnpm, and deno
+- **GitHub CDN hosting**: Images are uploaded to GitHub's CDN (`user-attachments/assets`)
+- **Works with private repos**: Unlike manual drag-and-drop, this works for both public and private repositories
+- **CLI and library**: Use as a command-line tool or import as a JavaScript/TypeScript module
+- **GitHub CLI integration**: Uses `gh` CLI for authentication - no tokens to manage
+- **Multi-runtime support**: Works with Node.js, Bun, and Deno
+- **TypeScript support**: Full type definitions included
 
-## Quick Start
+## Prerequisites
 
-### Using This Template
-
-1. Click "Use this template" on GitHub to create a new repository
-2. Clone your new repository
-3. Update `package.json` with your package name and description
-4. Update the `PACKAGE_NAME` constant in these scripts:
-   - `scripts/validate-changeset.mjs`
-   - `scripts/merge-changesets.mjs`
-   - `scripts/publish-to-npm.mjs`
-   - `scripts/format-release-notes.mjs`
-   - `scripts/create-manual-changeset.mjs`
-5. Install dependencies: `bun install`
-6. Start developing!
-
-### Development
+- [GitHub CLI (`gh`)](https://cli.github.com/) installed and authenticated
+- Node.js 20.0.0 or later (or Bun/Deno)
 
 ```bash
-# Install dependencies
-bun install
-
-# Run tests
-bun test
-
-# Or with other runtimes:
-npm test
-deno test --allow-read
-
-# Lint code
-bun run lint
-
-# Format code
-bun run format
-
-# Check all (lint + format + file size)
-bun run check
+# Verify GitHub CLI is authenticated
+gh auth status
 ```
 
-## Project Structure
+## Installation
 
-```
-.
-├── .changeset/           # Changeset configuration
-├── .github/workflows/    # GitHub Actions CI/CD
-├── .husky/               # Git hooks (pre-commit)
-├── examples/             # Usage examples
-├── scripts/              # Build and release scripts
-├── src/                  # Source code
-│   ├── index.js          # Main entry point
-│   └── index.d.ts        # TypeScript definitions
-├── tests/                # Test files
-├── .eslintrc.js          # ESLint configuration
-├── .prettierrc           # Prettier configuration
-├── bunfig.toml           # Bun configuration
-├── deno.json             # Deno configuration
-└── package.json          # Node.js package manifest
+```bash
+# Using npm
+npm install gh-upload-image
+
+# Using bun
+bun add gh-upload-image
+
+# Using pnpm
+pnpm add gh-upload-image
 ```
 
-## Design Choices
+## CLI Usage
 
-### Multi-Runtime Support
+```bash
+# Basic upload
+gh-upload-image screenshot.png -r owner/repo
 
-This template is designed to work seamlessly with all major JavaScript runtimes:
+# Get markdown output
+gh-upload-image diagram.png -r owner/repo --markdown
 
-- **Bun**: Primary runtime with highest performance, uses native test support (`bun test`)
-- **Node.js**: Alternative runtime, uses built-in test runner (`node --test`)
-- **Deno**: Secure runtime with built-in TypeScript support (`deno test`)
+# With custom alt text
+gh-upload-image photo.jpg -r owner/repo -m -a "My Photo"
 
-The [test-anywhere](https://github.com/link-foundation/test-anywhere) framework provides a unified testing API that works identically across all runtimes.
+# Dry run mode
+gh-upload-image image.gif -r owner/repo --dry
 
-### Package Manager Agnostic
+# Verbose output
+gh-upload-image screenshot.png -r owner/repo -v
+```
 
-While `package.json` is the source of truth for dependencies, the template supports:
+### CLI Options
 
-- **bun**: Primary choice, uses `bun.lockb`
-- **npm**: Uses `package-lock.json`
-- **yarn**: Uses `yarn.lock`
-- **pnpm**: Uses `pnpm-lock.yaml`
-- **deno**: Uses `deno.json` for configuration
+```
+USAGE:
+  gh-upload-image <image-file> -r <owner/repo> [options]
 
-Note: `package-lock.json` is not committed by default to allow any package manager.
+ARGUMENTS:
+  <image-file>           Path to the image file to upload
 
-### Code Quality
+OPTIONS:
+  -r, --repo <repo>      Repository in "owner/repo" format (required)
+  -m, --markdown         Output markdown format
+  -a, --alt <text>       Alt text for markdown output
+  -d, --dry, --dry-mode  Dry run mode - show what would be done
+  -v, --verbose          Enable verbose output
+  -h, --help             Show this help message
+  -V, --version          Show version number
+```
 
-- **ESLint**: Configured with recommended rules + Prettier integration
-- **Prettier**: Consistent code formatting
-- **Husky + lint-staged**: Pre-commit hooks ensure code quality
-- **File size limit**: Scripts must stay under 1000 lines for maintainability
+## Library Usage
 
-### Release Workflow
+### Basic Upload
 
-The release workflow uses [Changesets](https://github.com/changesets/changesets) for version management:
+```javascript
+import { uploadImage, generateMarkdown } from 'gh-upload-image';
 
-1. **Creating a changeset**: Run `bun run changeset` to document changes
-2. **PR validation**: CI checks for valid changeset in each PR
-3. **Automated versioning**: Merging to `main` triggers version bump
-4. **npm publishing**: Automated via OIDC trusted publishing (no tokens needed)
-5. **GitHub releases**: Auto-created with formatted release notes
+const result = await uploadImage({
+  filePath: './screenshot.png',
+  repository: 'owner/repo',
+});
 
-#### Manual Releases
+console.log(result.url);
+// https://github.com/user-attachments/assets/abc123...
 
-Two manual release modes are available via GitHub Actions:
+// Generate markdown
+const markdown = generateMarkdown(result, 'Screenshot');
+// ![Screenshot](https://github.com/user-attachments/assets/abc123...)
+```
 
-- **Instant release**: Immediately bump version and publish
-- **Changeset PR**: Create a PR with changeset for review
+### With Options
 
-### CI/CD Pipeline
+```javascript
+const result = await uploadImage({
+  filePath: './image.png',
+  repository: 'owner/repo',
+  verbose: true, // Enable debug logging
+  dryMode: false, // Set to true for testing
+});
+```
 
-The GitHub Actions workflow (`.github/workflows/release.yml`) provides:
+### Utility Functions
 
-1. **Changeset check**: Validates PR has exactly one changeset (added by that PR)
-2. **Lint & format**: Ensures code quality standards
-3. **Test matrix**: 3 runtimes × 3 OS = 9 test combinations
-4. **Changeset merge**: Combines multiple pending changesets at release time
-5. **Release**: Automated versioning and npm publishing
+```javascript
+import {
+  fileExists,
+  getFileSize,
+  formatFileSize,
+  getMimeType,
+  isExtensionAllowed,
+  parseRepository,
+  ALLOWED_EXTENSIONS,
+} from 'gh-upload-image';
 
-#### Robust Changeset Handling
+// Check if file exists
+fileExists('./image.png'); // true
 
-The CI/CD pipeline is designed to handle concurrent PRs gracefully:
+// Get file size
+formatFileSize(getFileSize('./image.png')); // "1.5 MB"
 
-- **PR Validation**: Only validates changesets **added by the current PR**, not pre-existing ones from other merged PRs. This prevents false failures when multiple PRs merge before a release cycle completes.
+// Check allowed extensions
+isExtensionAllowed('./image.png'); // true
+isExtensionAllowed('./script.js'); // false
 
-- **Release-time Merging**: If multiple changesets exist when releasing, they are automatically merged into a single changeset with:
-  - The highest version bump type (major > minor > patch)
-  - All descriptions preserved in chronological order
+// Parse repository formats
+parseRepository('owner/repo');
+parseRepository('https://github.com/owner/repo');
+parseRepository('git@github.com:owner/repo.git');
+// { owner: 'owner', repo: 'repo' }
+```
 
-This design decouples PR validation from the need to pull changes from the default branch, reducing conflicts and ensuring that even if CI/CD fails, all unpublished changesets will still get published when the error is resolved.
+## Supported File Types
 
-## Configuration
+The following file extensions are supported:
 
-### Updating Package Name
+- **Images**: `.gif`, `.jpg`, `.jpeg`, `.png`, `.webp`, `.svg`
+- **Videos**: `.mp4`, `.mov`
+- **Documents**: `.pdf`, `.docx`, `.pptx`, `.xlsx`, `.txt`, `.log`
+- **Archives**: `.zip`, `.gz`
 
-After creating a repository from this template, update the package name in:
+## How It Works
 
-1. `package.json`: `"name": "your-package-name"`
-2. `.changeset/config.json`: Package references
-3. Scripts that reference the package name (see Quick Start)
+1. The library uses the GitHub CLI (`gh`) to get an authentication token
+2. It fetches the repository ID from the GitHub API
+3. It requests an upload policy from GitHub's `/upload/policies/assets` endpoint
+4. It uploads the file to GitHub's S3-backed storage
+5. It returns the permanent CDN URL
 
-### ESLint Rules
+**Note**: This library uses an undocumented GitHub API endpoint. GitHub may change or restrict access to this endpoint at any time. The endpoint may require specific authentication configurations that vary by environment.
 
-Customize ESLint in `eslint.config.js`. Current configuration:
+The uploaded images are stored on GitHub's CDN and can be used in:
 
-- ES Modules support
-- Prettier integration
-- No console restrictions (common in CLI tools)
-- Strict equality enforcement
-- Async/await best practices
-- **Strict unused variables rule**: No exceptions - all unused variables, arguments, and caught errors must be removed (no `_` prefix exceptions)
+- Issue descriptions and comments
+- Pull request descriptions and comments
+- Markdown files in repositories
+- GitHub Discussions
 
-### Prettier Options
+## API Reference
 
-Configured in `.prettierrc`:
+### `uploadImage(options)`
 
-- Single quotes
-- Semicolons
-- 2-space indentation
-- 80-character line width
-- ES5 trailing commas
-- LF line endings
+Upload an image to GitHub.
 
-## Scripts Reference
+**Parameters:**
 
-| Script                 | Description                             |
-| ---------------------- | --------------------------------------- |
-| `bun test`             | Run tests with Bun                      |
-| `bun run lint`         | Check code with ESLint                  |
-| `bun run lint:fix`     | Fix ESLint issues automatically         |
-| `bun run format`       | Format code with Prettier               |
-| `bun run format:check` | Check formatting without changing files |
-| `bun run check`        | Run all checks (lint + format)          |
-| `bun run changeset`    | Create a new changeset                  |
+- `options.filePath` (string, required): Path to the image file
+- `options.repository` (string, required): Repository in "owner/repo" format or GitHub URL
+- `options.verbose` (boolean, default: false): Enable verbose logging
+- `options.dryMode` (boolean, default: false): Dry run mode
+
+**Returns:** `Promise<UploadResult>`
+
+```typescript
+interface UploadResult {
+  url: string; // The CDN URL of the uploaded image
+  assetId: string | null; // The unique asset ID
+  fileName: string; // Original file name
+  fileSize: number; // File size in bytes
+  mimeType: string; // MIME type
+  repository: string; // Repository used for upload
+  dryMode: boolean; // Whether this was a dry run
+}
+```
+
+### `generateMarkdown(result, altText?)`
+
+Generate markdown for an uploaded image.
+
+**Parameters:**
+
+- `result` (UploadResult): The upload result
+- `altText` (string, optional): Alt text for the image
+
+**Returns:** `string` - Markdown string
 
 ## Contributing
 
@@ -189,7 +203,7 @@ Configured in `.prettierrc`:
 2. Create a feature branch: `git checkout -b feature/my-feature`
 3. Make your changes
 4. Create a changeset: `bun run changeset`
-5. Commit your changes (pre-commit hooks will run automatically)
+5. Commit your changes
 6. Push and create a Pull Request
 
 ## License
