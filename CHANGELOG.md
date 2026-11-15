@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1
+
+### Patch Changes
+
+- 22ab9fb: Limit the npm package to runtime source, TypeScript definitions, README, and LICENSE, excluding repository development files.
+
 ## 0.2.0
 
 ### Minor Changes
